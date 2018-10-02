@@ -51,10 +51,10 @@ class ScanActivity : ListActivity() {
             Toast.makeText(this, "BLE Not supported, closing app", Toast.LENGTH_LONG).show()
             finish()
         }
+        requestLocationPermission()
 
         val bluetoothManager : BluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         mBluetoothAdapter = bluetoothManager.adapter
-        requestLocationPermission()
 
         if(mBluetoothAdapter == null){
             Toast.makeText(this, "BLE Not supported, closing app", Toast.LENGTH_LONG).show()
@@ -107,8 +107,9 @@ class ScanActivity : ListActivity() {
         val device = mDeviceListAdapter.getItem(position)
         if(device == null) return
         val intent = Intent(this@ScanActivity, DeviceActivity::class.java)
-        if(!device.name.contains("BBC") && !device.name.contains("micro:bit")){
-            Toast.makeText(this,"Device is not a micro:bit", Toast.LENGTH_SHORT)
+
+        if(device.name == null || (!device.name.contains("BBC") && !device.name.contains("micro:bit"))){
+            Toast.makeText(this,"Device is not a micro:bit", Toast.LENGTH_SHORT).show()
             return
         }
         intent.putExtra("deviceName", device.name)
@@ -124,10 +125,8 @@ class ScanActivity : ListActivity() {
         if(enable){
             mScanning = true
             scanBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_cancel))
-//            actionBar.title = "Scanning"
             mHandler.postDelayed({
                 mScanning = false
-//                  actionBar.title = "Not Scanning"
                     scanBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_refresh))
                 mBluetoothAdapter.stopLeScan(mScanCallback)
             }, SCAN_PERIOD)
@@ -137,7 +136,6 @@ class ScanActivity : ListActivity() {
         }else{
             mScanning = false
             scanBtn.setImageDrawable(ContextCompat.getDrawable(this, R.drawable.ic_refresh))
-//            actionBar.title = "Not Scanning"
             mBluetoothAdapter.stopLeScan(mScanCallback)
         }
     }
