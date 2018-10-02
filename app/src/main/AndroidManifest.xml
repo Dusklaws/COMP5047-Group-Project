@@ -23,6 +23,17 @@
             </intent-filter>
         </activity>
         <activity android:name=".DeviceActivity"></activity>
+        <receiver android:name="BluetoothBroadcastReceiver"
+            android:exported="true"
+            android:enabled="true">
+            <intent-filter>
+                <action android:name="comp5047.exmaster.unbend.DATA"></action>
+                <action android:name="comp5047.exmaster.unbend.CONNECTED"></action>
+                <action android:name="comp5047.exmaster.unbend.DISCONNECTED"></action>
+                <action android:name="comp5047.exmaster.unbend.ISSUES"></action>
+            </intent-filter>
+
+        </receiver>
     </application>
 
 </manifest>

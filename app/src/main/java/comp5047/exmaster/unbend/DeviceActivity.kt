@@ -2,9 +2,6 @@ package comp5047.exmaster.unbend
 
 import android.app.Activity
 import android.bluetooth.*
-import android.content.ComponentName
-import android.content.Context
-import android.content.ServiceConnection
 import android.location.Address
 import android.os.Bundle
 import android.os.IBinder
@@ -23,11 +20,11 @@ import android.bluetooth.BluetoothGattDescriptor
 import android.system.Os.poll
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGatt
+import android.content.*
 import comp5047.exmaster.unbend.R.id.status
 import kotlin.concurrent.thread
 
 
-abstract class AppCompatActivity
 
 class DeviceActivity : AppCompatActivity(){
 
@@ -47,8 +44,10 @@ class DeviceActivity : AppCompatActivity(){
     lateinit var mBluetoothGatt: BluetoothGatt
     lateinit var mGattCallback: GattCallBack
 
+    var bluetoothBroadCastReciever  = BluetoothBroadcastReceiver()
 
-    class GattCallBack : BluetoothGattCallback() {
+
+    class GattCallBack(context: Context): BluetoothGattCallback() {
 
         var UART_UUID = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
         var TX_UUID = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
@@ -57,7 +56,15 @@ class DeviceActivity : AppCompatActivity(){
 
         lateinit var tx : BluetoothGattCharacteristic
         lateinit var rx : BluetoothGattCharacteristic
-        var mConnected = false
+        var mContext = context
+
+
+        private fun broadcastData(action : String, data : String){
+            val intent = Intent()
+            intent.setAction(action)
+            intent.putExtra("data", data)
+            mContext.sendBroadcast(intent)
+        }
 
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
@@ -65,15 +72,22 @@ class DeviceActivity : AppCompatActivity(){
                 if (status == BluetoothGatt.GATT_SUCCESS) {
                     if (!gatt!!.discoverServices()) {
                         Log.d("Test", "Failed to discover services")
+                        broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with services")
                     }
                 } else {
                     Log.d("Test", "Failed to connect")
+                    broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with device")
+
                 }
             }else{
-                mConnected = false
                 Log.d("Test", "Disconnected")
+                broadcastData("comp5047.exmaster.unbend.DISCONNECTED","")
             }
+
         }
+
+
+
 
 
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
@@ -87,43 +101,47 @@ class DeviceActivity : AppCompatActivity(){
 
             if(rx == null || tx == null){
                 Log.d("Test" , "Failed to get characteristics")
+                broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with characteristics")
+                return
             }
 
             if(!gatt.setCharacteristicNotification(tx, true)){
                 Log.d("Test", "Set Characteristic failed")
-                mConnected = false
+                broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with characteristics")
+                return
             }
-            tx.descriptors.forEach{d ->
-                Log.d("Test Descriptor", d.uuid.toString())
-            }
+//            tx.descriptors.forEach{d ->
+//                Log.d("Test Descriptor", d.uuid.toString())
+//            }
 
             if (tx.getDescriptor(CLIENT_UUID) != null) {
                 val desc = tx.getDescriptor(CLIENT_UUID)
                 desc.value = BluetoothGattDescriptor.ENABLE_INDICATION_VALUE
                 if (!gatt.writeDescriptor(desc)) {
-                    mConnected = false
                     Log.d("Test", "Couldn't write RX client descriptor value!")
+                    broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with descriptor")
+                    return
+                }else{
+                    broadcastData("comp5047.exmaster.unbend.CONNECTED","")
                 }
             } else {
-                mConnected = false
                 Log.d("Test","Couldn't get RX client descriptor!")
+                broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with descriptor")
+                return
             }
         }
 
 
 
-
-
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Log.d("Test chanted" ,characteristic!!.getStringValue(0))
+            val s = characteristic!!.getStringValue(0)
+            Log.d("Test" ,s)
+            broadcastData("comp5047.exmaster.unbend.DATA",s)
 
         }
 
-
     }
-
-
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,45 +161,51 @@ class DeviceActivity : AppCompatActivity(){
         val bluetoothManager : BluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
         mBluetoothDevice = bluetoothAdapter.getRemoteDevice(mDeviceAddress)
-        mGattCallback = GattCallBack()
+        mGattCallback = GattCallBack(this@DeviceActivity)
+        val intentFilter = IntentFilter()
+        intentFilter.addAction("comp5047.exmaster.unbend.DATA")
+        intentFilter.addAction("comp5047.exmaster.unbend.CONNECTED")
+        intentFilter.addAction("comp5047.exmaster.unbend.DISCONNECTED")
+        intentFilter.addAction("comp5047.exmaster.unbend.ISSUES")
+
+        this.registerReceiver(bluetoothBroadCastReciever,intentFilter )
+
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
+
 
     fun onConnectClick(v : View){
         if(mConnected){
-            mConnected = false
-            disconnect()
+            mBluetoothGatt.disconnect()
         }else{
-            if(!connect()){
-                Toast.makeText(this, "Connection failed", Toast.LENGTH_SHORT).show()
-                return
-            }
-            runOnUiThread{
-                statusText.text = "Status Connected"
-                connectBtn.text = "Disconnect"
-            }
-            mConnected = true
+            mBluetoothGatt = mBluetoothDevice.connectGatt(this, true, mGattCallback)
         }
     }
 
-    private fun connect() : Boolean{
-        mBluetoothGatt = mBluetoothDevice.connectGatt(this, true, mGattCallback)
-        if(mGattCallback.mConnected){
-            return true
-        }
-        return false
+
+
+    fun parseData(s : String){
 
     }
 
-    fun disconnect(){
-
+    fun onConnected(){
+        statusText.text = "Status: Connected"
+        connectBtn.text = "Disconnect"
+        mConnected = true
     }
 
+    fun onDisconnected(){
+        statusText.text = "Status: Disconnected"
+        connectBtn.text = "Connect"
+        mConnected = false
+    }
 
-
+    fun onIssues(s:String){
+        Toast.makeText(this, "Failed to connect", Toast.LENGTH_SHORT).show()
+        statusText.text = s
+        connectBtn.text = "Connect"
+        mConnected = false
+    }
 
 
 
