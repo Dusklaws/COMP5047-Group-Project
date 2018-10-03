@@ -21,6 +21,7 @@ import android.system.Os.poll
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGatt
 import android.content.*
+import android.widget.ProgressBar
 import comp5047.exmaster.unbend.R.id.status
 import kotlin.concurrent.thread
 
@@ -38,6 +39,13 @@ class DeviceActivity : AppCompatActivity(){
     lateinit var xText : TextView
     lateinit var yText : TextView
     lateinit var zText : TextView
+
+    lateinit var xProgress : ProgressBar
+    lateinit var yProgress : ProgressBar
+    lateinit var zProgress : ProgressBar
+
+
+
     lateinit var connectBtn : Button
 
     lateinit var mBluetoothDevice : BluetoothDevice
@@ -136,7 +144,7 @@ class DeviceActivity : AppCompatActivity(){
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             super.onCharacteristicChanged(gatt, characteristic)
             val s = characteristic!!.getStringValue(0)
-            Log.d("Test" ,s)
+//            Log.d("Test" ,s)
             broadcastData("comp5047.exmaster.unbend.DATA",s)
 
         }
@@ -156,6 +164,11 @@ class DeviceActivity : AppCompatActivity(){
         xText = findViewById(R.id.x)
         yText = findViewById(R.id.y)
         zText = findViewById(R.id.z)
+        xProgress = findViewById(R.id.xProgress)
+        yProgress = findViewById(R.id.yProgress)
+        zProgress = findViewById(R.id.zProgress)
+
+
         connectBtn = findViewById(R.id.connectBtn)
 
         val bluetoothManager : BluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
@@ -185,6 +198,23 @@ class DeviceActivity : AppCompatActivity(){
 
 
     fun parseData(s : String){
+        Log.d("Test",s)
+        var x : Int = xText.text.toString().toInt()
+        var y : Int = yText.text.toString().toInt()
+        var z : Int = zText.text.toString().toInt()
+        val trimmed = s.trim()
+        when(trimmed.get(0)){
+            'x'-> x =  trimmed.substring(2).toInt()
+            'y'-> y = trimmed.substring(2).toInt()
+            'z'-> z = trimmed.substring(2).toInt()
+        }
+        xText.text = x.toString()
+        yText.text = y.toString()
+        zText.text = z.toString()
+        xProgress.progress = x + 2048
+        yProgress.progress = y + 2048
+        zProgress.progress = z + 2048
+
 
     }
 
