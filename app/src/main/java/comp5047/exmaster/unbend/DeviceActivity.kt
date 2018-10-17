@@ -1,30 +1,19 @@
 package comp5047.exmaster.unbend
 
-import android.app.Activity
 import android.bluetooth.*
-import android.location.Address
 import android.os.Bundle
-import android.os.IBinder
-import android.os.PersistableBundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import org.w3c.dom.Text
 import java.util.*
-import android.bluetooth.BluetoothGattService
-import comp5047.exmaster.unbend.R.id.*
 import android.bluetooth.BluetoothGattDescriptor
-import android.system.Os.poll
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGatt
 import android.content.*
 import android.widget.ProgressBar
-import comp5047.exmaster.unbend.R.id.status
-import kotlin.concurrent.thread
-
 
 
 class DeviceActivity : AppCompatActivity(){
@@ -160,7 +149,7 @@ class DeviceActivity : AppCompatActivity(){
 
 
         findViewById<TextView>(R.id.deviceName).text = mDeviceAddress
-        statusText = findViewById(R.id.status)
+        statusText = findViewById(R.id.status2)
         xText = findViewById(R.id.x)
         yText = findViewById(R.id.y)
         zText = findViewById(R.id.z)
@@ -180,7 +169,6 @@ class DeviceActivity : AppCompatActivity(){
         intentFilter.addAction("comp5047.exmaster.unbend.CONNECTED")
         intentFilter.addAction("comp5047.exmaster.unbend.DISCONNECTED")
         intentFilter.addAction("comp5047.exmaster.unbend.ISSUES")
-
         this.registerReceiver(bluetoothBroadCastReciever,intentFilter )
 
     }
