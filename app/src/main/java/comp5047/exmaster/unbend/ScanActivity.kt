@@ -47,17 +47,13 @@ class ScanActivity : ListActivity() {
         setContentView(R.layout.activity_scan)
         mHandler = Handler()
         scanBtn = findViewById(R.id.scanBtn)
-        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
-            Toast.makeText(this, "BLE Not supported, closing app", Toast.LENGTH_LONG).show()
-            finish()
-        }
-        requestLocationPermission()
+
 
         val bluetoothManager : BluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         mBluetoothAdapter = bluetoothManager.adapter
 
         if(mBluetoothAdapter == null){
-            Toast.makeText(this, "BLE Not supported, closing app", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "BLE Not supported, closing", Toast.LENGTH_LONG).show()
             finish()
             return
         }
@@ -106,19 +102,13 @@ class ScanActivity : ListActivity() {
         super.onListItemClick(l, v, position, id)
         val device = mDeviceListAdapter.getItem(position)
         if(device == null) return
-        val intent = Intent(this@ScanActivity, DeviceActivity::class.java)
 
-        if(device.name == null || (!device.name.contains("BBC") && !device.name.contains("micro:bit"))){
-            Toast.makeText(this,"Device is not a micro:bit", Toast.LENGTH_SHORT).show()
-            return
-        }
-        intent.putExtra("deviceName", device.name)
+        mScanning = false
+        mBluetoothAdapter.stopLeScan(mScanCallback)
+        val intent = Intent()
         intent.putExtra("deviceAddress", device.address)
-        if(mScanning){
-            mScanning = false
-            mBluetoothAdapter.stopLeScan(mScanCallback)
-        }
-        startActivity(intent)
+        setResult(100, intent)
+        finish()
     }
 
     fun scanDevice(enable : Boolean){
