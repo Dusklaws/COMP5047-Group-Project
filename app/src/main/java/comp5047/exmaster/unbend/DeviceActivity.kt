@@ -1,6 +1,10 @@
 package comp5047.exmaster.unbend
 
 import android.Manifest
+import android.app.Notification
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
 import android.bluetooth.*
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
@@ -15,8 +19,11 @@ import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGatt
 import android.content.*
 import android.content.pm.PackageManager
+import android.media.Ringtone
+import android.media.RingtoneManager
 import android.os.Handler
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
 import android.view.Menu
 import android.view.MenuItem
@@ -54,7 +61,7 @@ class DeviceActivity : AppCompatActivity(){
 
     var bluetoothBroadCastReciever  = BluetoothBroadcastReceiver()
 
-
+    var mInterval = 3
 
     var xCal = Pair(9999,0)
     var yCal = Pair(9999,0)
@@ -161,6 +168,9 @@ class DeviceActivity : AppCompatActivity(){
     fun onCalibrate(v : View){
         calibrateBtn.isEnabled = false
         connectBtn.isEnabled = false
+        var xCal = Pair(9999,0)
+        var yCal = Pair(9999,0)
+        var zCal = Pair(9999,0)
         mCalibrated = false
         Toast.makeText(this, "Calibrating, adjust your head to the healthy position", Toast.LENGTH_SHORT).show()
         mCalibrating = 10
@@ -179,9 +189,9 @@ class DeviceActivity : AppCompatActivity(){
             connectBtn.isEnabled = true
             calibrateBtn.isEnabled = true
             statusText.text = "Calibrated"
-            Log.d("Test", xCal.toString())
-            Log.d("Test", yCal.toString())
-            Log.d("Test", zCal.toString())
+            Log.d("Test Cal", xCal.toString())
+            Log.d("Test Cal", yCal.toString())
+            Log.d("Test Cal", zCal.toString())
             mCalibrated = true
         }
     }
@@ -280,20 +290,50 @@ class DeviceActivity : AppCompatActivity(){
         }
 
         if(mCalibrated){
-            if(x < xCal.first){
-                Toast.makeText(this, "Adjust your head right", Toast.LENGTH_SHORT).show()
-            }else if( x > xCal.second){
-                Toast.makeText(this, "Adjust your head left", Toast.LENGTH_LONG).show()
-
-            }
-            if(y < yCal.first){
-                Toast.makeText(this, "Adjust your head forward", Toast.LENGTH_LONG).show()
-            }else if( y > yCal.second){
-                Toast.makeText(this, "Adjust your head backward", Toast.LENGTH_LONG).show()
-
+            mInterval -= 1
+            if(mInterval <= 0){
+                var toToast : String = ""
+                var notOpt = false
+                if(x < xCal.first){
+                    toToast +=  " right"
+                    notOpt = true
+                }else if( x > xCal.second){
+                    toToast += " left"
+                    notOpt = true
+                }
+                if(z < zCal.first){
+                    toToast += " back"
+                    notOpt = true
+                }else if(z > zCal.second){
+                    toToast += " forward"
+                    notOpt = true
+                }
+                if(notOpt)Toast.makeText(this, "Adjust your head" + toToast, Toast.LENGTH_SHORT).show()
+                mInterval = 3
             }
 
         }
+    }
+
+    fun showNotification(title : String, content : String){
+        val mNotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = NotificationChannel("default", "UNBEND", NotificationManager.IMPORTANCE_DEFAULT)
+            channel.description = "Unbend app"
+            mNotificationManager.createNotificationChannel(channel)
+        }
+        var mBuilder = NotificationCompat.Builder(applicationContext, "default")
+                .setSmallIcon(R.drawable.ic_refresh)
+                .setContentTitle(title)
+                .setContentText(content)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
+
+        val intent =  Intent(applicationContext, DeviceActivity::class.java)
+        val pi = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        mBuilder.setContentIntent(pi)
+        mNotificationManager.notify(0, mBuilder.build())
     }
 
     fun onConnected(){
