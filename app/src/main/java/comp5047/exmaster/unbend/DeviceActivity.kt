@@ -84,11 +84,11 @@ class DeviceActivity : AppCompatActivity(){
 
     internal var mqttCallback: MqttCallbackExtended = object : MqttCallbackExtended {
         override fun connectComplete(b: Boolean, s: String) {
-
+            status2.setText("Status: Connected")
         }
 
         override fun connectionLost(throwable: Throwable) {
-
+            status2.setText("Status: Disconnected")
         }
 
         @Throws(Exception::class)
