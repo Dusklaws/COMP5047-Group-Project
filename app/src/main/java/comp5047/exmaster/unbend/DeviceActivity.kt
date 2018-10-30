@@ -10,9 +10,6 @@ import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.util.Log
 import android.view.View
-import android.widget.Button
-import android.widget.TextView
-import android.widget.Toast
 import java.util.*
 import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothGattCharacteristic
@@ -27,7 +24,13 @@ import android.support.v4.app.NotificationCompat
 import android.support.v4.content.ContextCompat
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ProgressBar
+import android.widget.*
+import comp5047.exmaster.mqtt.MqttHelper
+import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken
+import org.eclipse.paho.client.mqttv3.MqttCallbackExtended
+import org.eclipse.paho.client.mqttv3.MqttMessage
+import java.text.NumberFormat
+import java.text.ParsePosition
 
 
 class DeviceActivity : AppCompatActivity(){
@@ -66,6 +69,40 @@ class DeviceActivity : AppCompatActivity(){
     var xCal = Pair(9999,0)
     var yCal = Pair(9999,0)
     var zCal = Pair(9999,0)
+
+    //////////////////////////////
+    //           MQTT           //
+    //////////////////////////////
+    lateinit var mqttHelper: MqttHelper
+
+    lateinit var status2: TextView
+    lateinit var forceDisplay: TextView
+    lateinit var settingServer: EditText
+    lateinit var statusDisplay: TextView
+
+    var fSensorThreshold = 0.10
+
+    internal var mqttCallback: MqttCallbackExtended = object : MqttCallbackExtended {
+        override fun connectComplete(b: Boolean, s: String) {
+
+        }
+
+        override fun connectionLost(throwable: Throwable) {
+
+        }
+
+        @Throws(Exception::class)
+        override fun messageArrived(topic: String, mqttMessage: MqttMessage) {
+            val mqttMsg = mqttMessage.toString()
+            Log.w("Debug", String.format("'%s'", mqttMsg))
+            forceDisplay.text = mqttMsg
+            updateStatusDisplay(statusDisplay, mqttMsg)
+        }
+
+        override fun deliveryComplete(iMqttDeliveryToken: IMqttDeliveryToken) {
+
+        }
+    }
 
 
     class GattCallBack(context: Context): BluetoothGattCallback() {
@@ -238,6 +275,16 @@ class DeviceActivity : AppCompatActivity(){
         intentFilter.addAction("comp5047.exmaster.unbend.ISSUES")
         this.registerReceiver(bluetoothBroadCastReciever,intentFilter )
 
+        // MQTT setup
+        status2 = findViewById(R.id.status2) as TextView
+        forceDisplay = findViewById(R.id.forceTextView) as TextView
+        settingServer = findViewById(R.id.setting_server_uri) as EditText
+        statusDisplay = findViewById(R.id.status_display) as TextView
+
+        startMqtt(resources.getString(R.string.setting_server),
+                resources.getString(R.string.setting_client_id),
+                resources.getString(R.string.setting_topic))
+        mqttHelper.publishToTopic("<MQTT CLIENT IS UP>")
     }
 
     fun onSetUp(v:View){
@@ -388,4 +435,66 @@ class DeviceActivity : AppCompatActivity(){
         }
     }
 
+    /*=============================================
+                         MQTT
+    ==============================================*/
+
+    /**
+     * Create a new mqttHelper instance
+     */
+    private fun startMqtt(serverUri: String, clientId: String, subbedTopic: String) {
+        mqttHelper = MqttHelper(applicationContext, serverUri, clientId, subbedTopic)
+        mqttHelper.setCallback(mqttCallback)
+
+        settingServer.setText(serverUri)
+    }
+
+
+    /**
+     * Update the status display
+     */
+    private fun updateStatusDisplay(statusDisplay: TextView, msg: String) {
+
+        // Check the message and update display accordingly
+        if (isNumeric(msg)) {
+            val value = java.lang.Double.parseDouble(msg)
+
+            if (value >= fSensorThreshold) {
+                statusDisplay.setBackgroundColor(resources.getColor(R.color.status_green))
+                statusDisplay.text = "Nice! Keep it up"
+            } else {
+                statusDisplay.setBackgroundColor(resources.getColor(R.color.status_yellow))
+                statusDisplay.text = "Warning - your back is not straight"
+            }
+
+        } else {
+            statusDisplay.setBackgroundColor(resources.getColor(R.color.status_red))
+            statusDisplay.text = "Message is not a number!"
+        }
+    }
+
+    /**
+     * Change the MQTT client settings. This will create a new MqttHelper object with the new settings
+     */
+    fun startMqttClient(v: View) {
+        Log.i("MQTT_Test", "changeSettings()")
+        startMqtt(settingServer.text.toString(),
+                resources.getString(R.string.setting_client_id),
+                resources.getString(R.string.setting_topic))
+
+
+        mqttHelper.publishToTopic("<MQTT CLIENT IS UP ONE MORE TIME>")
+    }
+
+
+    /**
+     * Parse a string and check if it is numeric.
+     * From here: https://stackoverflow.com/questions/1102891/how-to-check-if-a-string-is-numeric-in-java
+     */
+    private fun isNumeric(str: String): Boolean {
+        val formatter = NumberFormat.getInstance()
+        val pos = ParsePosition(0)
+        formatter.parse(str, pos)
+        return str.length == pos.index
+    }
 }

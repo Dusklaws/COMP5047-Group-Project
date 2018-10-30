@@ -144,11 +144,10 @@ public class MqttHelper {
      * Publish to a topic
      */
     public void publishToTopic(final String payload) {
-        Log.w("Mqtt", String.format("Server URI: '%s'\n", m_serverUri));
-        Log.w("Mqtt", String.format("Client ID:  '%s'\n", m_clientId));
-        Log.w("Mqtt", String.format("Topic:      '%s'\n", m_subbedTopic));
+        Log.w("Mqtt", String.format("pub Server URI: '%s'\n", m_serverUri));
+        Log.w("Mqtt", String.format("pub Client ID:  '%s'\n", m_clientId));
+        Log.w("Mqtt", String.format("pub Topic:      '%s'\n", m_subbedTopic));
         try {
-            // TODO fix problem - seems to be something to do with IMqttToken!
             mqttAndroidClient.publish(m_subbedTopic, new MqttMessage(payload.getBytes()), null, new IMqttActionListener() {
                 @Override
                 public void onSuccess(IMqttToken asyncActionToken) {

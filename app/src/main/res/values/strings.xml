@@ -1,3 +1,8 @@
 <resources>
     <string name="app_name">Unbend</string>
+
+    <string name="setting_server">tcp://iot.eclipse.org:1883</string>
+    <!--    <string name="setting_server">tcp://test.mosquitto.org:1883</string>-->
+    <string name="setting_client_id">unbendClient</string>
+    <string name="setting_topic">unbend/fSensorData</string>
 </resources>
