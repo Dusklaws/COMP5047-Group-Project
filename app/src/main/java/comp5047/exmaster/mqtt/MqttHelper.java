@@ -29,6 +29,7 @@ public class MqttHelper {
         this.m_serverUri = serverUri;
         this.m_clientId = clientId;
         this.m_subbedTopic = subbedTopic;
+        Log.w("Mqtt", "MqttHelper constructor called");
         initMqttClient(context, this.m_serverUri, this.m_clientId, this.m_subbedTopic);
     }
 
@@ -62,6 +63,7 @@ public class MqttHelper {
 
             }
         });
+        Log.w("Mqtt", "initMqttClient() called");
         try {
             connect();
         } catch (MqttException e) {
@@ -87,6 +89,8 @@ public class MqttHelper {
         //mqttConnectOptions.setUserName(username);
         //mqttConnectOptions.setPassword(password.toCharArray());
 
+        Log.w("Mqtt", "connect() - gonna try connect");
+
         try {
 
             mqttAndroidClient.connect(mqttConnectOptions, null, new IMqttActionListener() {
@@ -108,8 +112,11 @@ public class MqttHelper {
                 }
             });
 
+        Log.w("Mqtt", "connect() - idk...!");
 
         } catch (MqttException ex){
+
+            Log.w("Mqtt", "connect() - AN EXCEPTION OCCURED");
             ex.printStackTrace();
         }
     }
@@ -121,6 +128,7 @@ public class MqttHelper {
         Log.w("Mqtt", String.format("Server URI: %s\n", m_serverUri));
         Log.w("Mqtt", String.format("Client ID:  %s\n", m_clientId));
         Log.w("Mqtt", String.format("Topic:      %s\n", m_subbedTopic));
+        Log.w("Mqtt", "subscribeToTopic() - gonna try subscribe");
         try {
             mqttAndroidClient.subscribe(m_subbedTopic, 0, null, new IMqttActionListener() {
                 @Override
@@ -134,8 +142,10 @@ public class MqttHelper {
                 }
             });
 
+            Log.w("Mqtt", "subscribeToTopic() - success!");
+
         } catch (MqttException ex) {
-            System.err.println("Exception occurred!");
+            Log.w("Mqtt", "subscribeToTopic() - AN EXCEPTION OCCURED");
             ex.printStackTrace();
         }
     }

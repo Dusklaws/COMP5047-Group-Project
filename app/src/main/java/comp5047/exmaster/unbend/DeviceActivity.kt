@@ -284,7 +284,6 @@ class DeviceActivity : AppCompatActivity(){
         startMqtt(resources.getString(R.string.setting_server),
                 resources.getString(R.string.setting_client_id),
                 resources.getString(R.string.setting_topic))
-        mqttHelper.publishToTopic("<MQTT CLIENT IS UP>")
     }
 
     fun onSetUp(v:View){
@@ -481,9 +480,6 @@ class DeviceActivity : AppCompatActivity(){
         startMqtt(settingServer.text.toString(),
                 resources.getString(R.string.setting_client_id),
                 resources.getString(R.string.setting_topic))
-
-
-        mqttHelper.publishToTopic("<MQTT CLIENT IS UP ONE MORE TIME>")
     }
 
 
