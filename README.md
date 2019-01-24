@@ -8,4 +8,5 @@ bad value the user will be alerted to fix their bad habbit. The Raspberry Pi wil
 the back rest of the user to make sure that their back is straight. The Raspberry is connected through MQTT and similarly if the app recieve
 a bad value it will alert the user to fix their back.
 
-[Micro:bit Script](https://makecode.microbit.org/_VKjEPJ5siDc8)
+* [Micro:bit Script](https://makecode.microbit.org/_VKjEPJ5siDc8)
+* [Our demo video](https://youtu.be/hbHHSo2vLdc)
