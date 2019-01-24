@@ -10,7 +10,7 @@ import android.widget.Toast
 class BluetoothBroadcastReceiver : BroadcastReceiver() {
 
 
-
+    //For updating UI since once the message is recieve through Bluetooth the thread can't exit and update UI
     override fun onReceive(context: Context, intent: Intent) {
         val action = intent.action
         val mContext = context as DeviceActivity
