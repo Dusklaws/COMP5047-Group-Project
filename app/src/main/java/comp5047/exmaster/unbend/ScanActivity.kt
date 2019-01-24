@@ -26,7 +26,10 @@ import android.widget.Toast
 import comp5047.exmaster.unbend.R
 
 class ScanActivity : ListActivity() {
-
+    
+    
+    //Used for scanning for devices will return the associated Bluetooth device name and address
+    
     lateinit var mDeviceListAdapter: DeviceListAdapter
     lateinit var mBluetoothAdapter: BluetoothAdapter
     var mScanning : Boolean = false
