@@ -104,9 +104,11 @@ class DeviceActivity : AppCompatActivity(){
         }
     }
 
-
+    //BLE use this callback class to recieve event and messages
+    //Look up Google API on how to use BLE to understand more
     class GattCallBack(context: Context): BluetoothGattCallback() {
-
+        
+        //Value for specifying types of connection
         var UART_UUID = UUID.fromString("6E400001-B5A3-F393-E0A9-E50E24DCCA9E")
         var TX_UUID = UUID.fromString("6E400002-B5A3-F393-E0A9-E50E24DCCA9E")
         var RX_UUID = UUID.fromString("6E400003-B5A3-F393-E0A9-E50E24DCCA9E")
@@ -116,14 +118,15 @@ class DeviceActivity : AppCompatActivity(){
         lateinit var rx : BluetoothGattCharacteristic
         var mContext = context
 
-
+        //For broadcast function so that UI can be updated with other threads
         private fun broadcastData(action : String, data : String){
             val intent = Intent()
             intent.setAction(action)
             intent.putExtra("data", data)
             mContext.sendBroadcast(intent)
         }
-
+        
+        //Once connection is initated
         override fun onConnectionStateChange(gatt: BluetoothGatt?, status: Int, newState: Int) {
             super.onConnectionStateChange(gatt, status, newState)
             if (newState == BluetoothGatt.STATE_CONNECTED) {
@@ -144,10 +147,8 @@ class DeviceActivity : AppCompatActivity(){
 
         }
 
-
-
-
-
+        //Once connected BLE devices will broadcast available services
+        //Connect to the service with our UUID
         override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
             super.onServicesDiscovered(gatt, status)
             gatt!!.services.forEach{service ->
@@ -168,9 +169,7 @@ class DeviceActivity : AppCompatActivity(){
                 broadcastData("comp5047.exmaster.unbend.ISSUES","Status: Issues with characteristics")
                 return
             }
-//            tx.descriptors.forEach{d ->
-//                Log.d("Test Descriptor", d.uuid.toString())
-//            }
+
 
             if (tx.getDescriptor(CLIENT_UUID) != null) {
                 val desc = tx.getDescriptor(CLIENT_UUID)
@@ -190,18 +189,17 @@ class DeviceActivity : AppCompatActivity(){
         }
 
 
-
+        //Once characteristic of communication is send data start sending
         override fun onCharacteristicChanged(gatt: BluetoothGatt?, characteristic: BluetoothGattCharacteristic?) {
             super.onCharacteristicChanged(gatt, characteristic)
             val s = characteristic!!.getStringValue(0)
-//            Log.d("Test" ,s)
             broadcastData("comp5047.exmaster.unbend.DATA",s)
 
         }
 
     }
 
-
+    //For calibrating natural angle
     fun onCalibrate(v : View){
         calibrateBtn.isEnabled = false
         connectBtn.isEnabled = false
@@ -241,7 +239,9 @@ class DeviceActivity : AppCompatActivity(){
             findViewById<TextView>(R.id.deviceName).text = mDeviceAddress
         }
     }
-
+    
+    //Initialize some value and do check on bluetooth availbility
+    //Setup Broadcast and MQTT
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mHandler = Handler()
@@ -251,7 +251,8 @@ class DeviceActivity : AppCompatActivity(){
             finish()
         }
         requestLocationPermission()
-
+        
+        //Already know the device address so we are just gooing to assign 
         mDeviceAddress = "CE:8D:8C:73:9E:40"
         findViewById<TextView>(R.id.deviceName).text = mDeviceAddress
         statusText = findViewById(R.id.status)
@@ -285,7 +286,8 @@ class DeviceActivity : AppCompatActivity(){
                 resources.getString(R.string.setting_client_id),
                 resources.getString(R.string.setting_topic))
     }
-
+    
+    //Set up Bluetooth 
     fun onSetUp(v:View){
         val bluetoothManager : BluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val bluetoothAdapter = bluetoothManager.adapter
@@ -297,7 +299,8 @@ class DeviceActivity : AppCompatActivity(){
         connectBtn.isEnabled =true
     }
 
-
+    //Handle Button Connect Click
+    //Initiate Connection or disconnect
     fun onConnectClick(v : View){
         if(mConnected){
             mBluetoothGatt.disconnect()
@@ -307,7 +310,7 @@ class DeviceActivity : AppCompatActivity(){
     }
 
 
-
+    //Parse data recieved from the 
     fun parseData(s : String){
         Log.d("Test",s)
 
@@ -360,7 +363,7 @@ class DeviceActivity : AppCompatActivity(){
 
         }
     }
-
+    
     fun showNotification(title : String, content : String){
         val mNotificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
@@ -381,7 +384,8 @@ class DeviceActivity : AppCompatActivity(){
         mBuilder.setContentIntent(pi)
         mNotificationManager.notify(0, mBuilder.build())
     }
-
+    
+    
     fun onConnected(){
         statusText.text = "Status: Connected"
         connectBtn.text = "Disconnect"
